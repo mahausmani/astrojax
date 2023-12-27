@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import dataset
 import utils
-import bayesian.metrics
+import bayesian.metrics as metrics
 import argparse
 
 from torch.optim import Adam, lr_scheduler
