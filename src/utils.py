@@ -23,11 +23,14 @@ def plot(outputs, targets, labels, filename):
     outputs = outputs.cpu().detach().numpy()
     outputs = outputs.reshape(-1, outputs.shape[-1])
     targets = targets.cpu().detach().numpy()
+    targets = targets.flatten()
+
+    print(outputs.shape, targets.shape)
     
     figure = corner.corner(
             outputs,
             labels=labels, 
-            # truths=targets,
+            truths=targets,
             quantiles=[0.16, 0.5, 0.84],
             show_titles=True,
             title_kwargs={"fontsize": 12}

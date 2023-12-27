@@ -65,13 +65,13 @@ def validate_model(model, criterion, validloader, num_ens=1, beta_type=0.1, epoc
 
     return valid_loss/len(validloader), np.mean([acc.detach().cpu().numpy() for acc in accs])
 
-def run(datapath, run_num, train):
+def run(datapath, run_num, train, saved_model_path=None):
     dataloader = dataset.Dataset(data_path=datapath)
 
     activation = 'relu'
     train_ens = 1
     valid_ens = 1
-    samples = 1000
+    samples = 100
     beta_type = 0.1
     n_epochs = 100
     lr_start = 0.001
@@ -125,9 +125,11 @@ def run(datapath, run_num, train):
                 valid_loss_max = valid_loss
 
     torch.cuda.empty_cache()
-    model = BayesianLinearModel(inputs=input_dim, outputs=output_dim, hidden_dim=hidden_dim, priors=None, activation=activation).to(device)
-    model.load_state_dict(torch.load('checkpoints/bayesian/model_0.0.1.pt'))
-    labels = [r'$\alpha$', r'$mass_{min}$', r'$mass_{max}$', r'$Mass_{max}$', r'$\sigma_{ecc}$']
+    if saved_model_path is not None:
+        model = BayesianLinearModel(inputs=input_dim, outputs=output_dim, hidden_dim=hidden_dim, priors=None, activation=activation).to(device)
+        model.load_state_dict(torch.load(saved_model_path))
+
+    labels = [r'$\alpha$', r'$m_{min}$', r'$m_{max}$', r'$M_{max}$', r'$\sigma_{ecc}$']
     for idx, (x_vals, y_vals) in enumerate(test_loader):
         x_vals, y_vals = x_vals.to(device), y_vals.to(device)
 
@@ -140,4 +142,4 @@ def run(datapath, run_num, train):
         fig = utils.plot(outputs, y_vals, labels=labels, filename = f'plots/bayesian/{run_num}/{idx}.png')
 
 
-run('/content/', run_num="0.0.1", train=False)
+run('/home/safi/Semester 07/Kaavish/bnn/data', run_num="0.0.1", train=False, saved_model_path='checkpoints/bayesian/model_0.0.1.pt')
