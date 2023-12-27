@@ -8,7 +8,7 @@ import bayesian.metrics as metrics
 import argparse
 
 from torch.optim import Adam, lr_scheduler
-from .bayesian.model import BayesianLinearModel
+from bayesian.model import BayesianLinearModel
 from tqdm import tqdm
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
