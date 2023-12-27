@@ -25,13 +25,14 @@ def train_model(model, optimizer, criterion, trainloader, num_ens=1, beta_type=0
         kl = 0.0
         for j in range(num_ens):
             output, _kl = model(x_vals)
+            print(output)
             kl += _kl
-            outputs[:, :, j] = output   
+            outputs[:, :, j] = output
 
         kl = kl / num_ens
         kl_list.append(kl.item())
         log_outputs = utils.logmeanexp(outputs, dim=2)
-        
+
         beta = metrics.get_beta(i-1, len(trainloader), beta_type, epoch, num_epochs)
         loss = criterion(log_outputs, y_vals, kl, beta)
         loss.backward()
@@ -40,7 +41,7 @@ def train_model(model, optimizer, criterion, trainloader, num_ens=1, beta_type=0
         accs.append(metrics.acc(log_outputs.data, y_vals))
         training_loss += loss.cpu().data.numpy()
 
-    return training_loss/len(trainloader), np.mean(accs), np.mean(kl_list)
+    return training_loss/len(trainloader), np.mean([acc.detach().cpu().numpy() for acc in accs]), np.mean(kl_list)
 
 def validate_model(model, criterion, validloader, num_ens=1, beta_type=0.1, epoch=None, num_epochs=None):
     model.train()
@@ -62,7 +63,7 @@ def validate_model(model, criterion, validloader, num_ens=1, beta_type=0.1, epoc
         valid_loss += criterion(log_outputs, y_vals, kl, beta).item()
         accs.append(metrics.acc(log_outputs, y_vals))
 
-    return valid_loss/len(validloader), np.mean([acc.detach().numpy() for acc in accs])
+    return valid_loss/len(validloader), np.mean([acc.detach().cpu().numpy() for acc in accs])
 
 def run(datapath, run_num, train):
     dataloader = dataset.Dataset(data_path=datapath)
@@ -77,12 +78,12 @@ def run(datapath, run_num, train):
     batch_size = 15
     hidden_dim = [1000, 1000, 1000, 1000]
 
-    # priors = {
-    # 'prior_mu': 0,
-    # 'prior_sigma': 0.1,
-    # 'posterior_mu_initial': (0, 0.1),  # (mean, std) normal_
-    # 'posterior_rho_initial': (-5, 0.1),  # (mean, std) normal_
-    # }
+    priors = {
+    'prior_mu': 0,
+    'prior_sigma': 1,
+    'posterior_mu_initial': (0, 1),  # (mean, std) normal_
+    'posterior_rho_initial': (0, 10),  # (mean, std) normal_
+    }
 
     ckpt_dir = f'checkpoints/bayesian'
     ckpt_name = f'checkpoints/bayesian/model_{run_num}.pt'
@@ -119,19 +120,24 @@ def run(datapath, run_num, train):
             if valid_loss <= valid_loss_max:
                 print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(
                     valid_loss_max, valid_loss))
-                
+
                 torch.save(model.state_dict(), ckpt_name)
                 valid_loss_max = valid_loss
 
+    torch.cuda.empty_cache()
+    model = BayesianLinearModel(inputs=input_dim, outputs=output_dim, hidden_dim=hidden_dim, priors=None, activation=activation).to(device)
+    model.load_state_dict(torch.load('checkpoints/bayesian/model_0.0.1.pt'))
     labels = [r'$\alpha$', r'$mass_{min}$', r'$mass_{max}$', r'$Mass_{max}$', r'$\sigma_{ecc}$']
     for idx, (x_vals, y_vals) in enumerate(test_loader):
         x_vals, y_vals = x_vals.to(device), y_vals.to(device)
-        outputs = torch.zeros(samples, x_vals.shape[0], y_vals.shape[1]).to(device)
-        for j in range(samples):
-            output, _ = model(x_vals)
-            outputs[j, :, :] = output
+
+        with torch.no_grad():
+          outputs = torch.zeros(samples, x_vals.shape[0], y_vals.shape[1]).to(device)
+          for j in range(samples):
+              output, _ = model(x_vals)
+              outputs[j, :, :] = output
 
         fig = utils.plot(outputs, y_vals, labels=labels, filename = f'plots/bayesian/{run_num}/{idx}.png')
-        
 
-run('/home/safi/Semester 07/Kaavish/bnn/data', run_num="0.0.1", train=True)
+
+run('/content/', run_num="0.0.1", train=False)
