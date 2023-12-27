@@ -1,6 +1,6 @@
 import torch.nn as nn
-from layers import BayesianLinear
-from misc import ModuleWrapper
+from .layers import BayesianLinear
+from .misc import ModuleWrapper
 
 class BayesianLinearModel(ModuleWrapper):
     def __init__(self, inputs, outputs, hidden_dim, priors=None, activation='relu'):

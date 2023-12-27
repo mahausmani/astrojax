@@ -58,8 +58,7 @@ class Dataset():
         scaler = StandardScaler()
         X_train = scaler.fit_transform(X_train)
         X_test = scaler.transform(X_test)
-
-
+        
         return [X_train, y_train], [X_test, y_test]
     
 def get_dataloader(trainset, testset, val_size, batch_size):
