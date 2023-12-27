@@ -25,7 +25,7 @@ def plot(outputs, targets, labels, filename):
     targets = targets.cpu().detach().numpy()
     targets = targets.flatten()
 
-    print(outputs.shape, targets.shape)
+    # print(outputs.shape, targets.shape)
     
     figure = corner.corner(
             outputs,
