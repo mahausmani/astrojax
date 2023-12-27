@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from misc import ModuleWrapper
-from metrics import calculate_kl as KL_DIV
+from .misc import ModuleWrapper
+from .metrics import calculate_kl as KL_DIV
 
 class BayesianLinear(ModuleWrapper):
     def __init__(self, in_features, out_features, bias=True, priors=None):
