@@ -27,7 +27,7 @@ class Dataset():
 
         else:                                                
             directories = os.listdir(self.data_path)                                      
-            for idx, example in enumerate(directories[:15]):
+            for idx, example in enumerate(directories):
                 example_path = osp.join(self.data_path, example)
 
                 params = pd.read_csv(osp.join(example_path, 'configuration.csv'))
@@ -48,7 +48,7 @@ class Dataset():
 
             np.savez(osp.join(self.data_path, 'dataset.npz'), examples=examples, population_params=population_params)
 
-        return examples, population_params
+        return np.array(examples), np.array(population_params)
     
     def get_dims(self):
         return self.input.shape[1], self.output.shape[1]
@@ -78,5 +78,5 @@ def get_dataloader(trainset, testset, val_size, batch_size):
     return train_loader, valid_loader, test_loader
 
 if __name__ == '__main__':
-    dataset = Dataset(data_path='/home/safi/Semester 07/Kaavish/bnn/data')
+    dataset = Dataset(data_path='/home/kaavish/astrojax/data/')
     dataset.load()

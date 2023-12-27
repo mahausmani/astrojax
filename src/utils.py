@@ -18,7 +18,7 @@ def adjust_learning_rate(optimizer, lr):
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
-def plot(outputs, targets, labels, filename):
+def plot(outputs, targets, labels, filename=None):
     """Plot corner plot of the outputs and targets"""
     outputs = outputs.cpu().detach().numpy()
     outputs = outputs.reshape(-1, outputs.shape[-1])
@@ -36,4 +36,5 @@ def plot(outputs, targets, labels, filename):
             title_kwargs={"fontsize": 12}
             )
     
-    plt.show()
+    if filename is not None:
+        figure.savefig(filename)
