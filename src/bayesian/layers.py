@@ -19,7 +19,7 @@ class BayesianLinear(ModuleWrapper):
                 'prior_mu': 0,
                 'prior_sigma': 0.1,
                 'posterior_mu_initial': (0, 0.1),
-                'posterior_rho_initial': (30, 195),
+                'posterior_rho_initial': (30, 15),
             }
 
         self.prior_mu = priors['prior_mu']
@@ -41,7 +41,7 @@ class BayesianLinear(ModuleWrapper):
 
     def reset_parameters(self):
         self.W_mu.data.normal_(*self.posterior_mu_initial)
-        self.W_rho.data.uniform_(*self.posterior_rho_initial)
+        self.W_rho.data.normal_(*self.posterior_rho_initial)
 
         if self.use_bias:
             self.bias_mu.data.normal_(*self.posterior_mu_initial)
