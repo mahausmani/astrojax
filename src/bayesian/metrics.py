@@ -11,9 +11,9 @@ class ELBO(nn.Module):
 
     def forward(self, input, target, kl, beta):
         # Calculate the log likelihood term for Gaussian likelihood
-        log_likelihood = -0.5 * torch.log(2 * torch.tensor(3.14159265358979323846)) - 0.5 * ((target - input) ** 2)  # Gaussian likelihood
-        negative_log_likelihood = -log_likelihood
-        elbo_loss = torch.mean(negative_log_likelihood) + beta * kl
+        mean = np.mean(input, axis=2)
+        log_likelihood = torch.distributions.Normal(mean, 1).log_prob(target).sum(dim=1)
+        elbo_loss = torch.mean(log_likelihood) - beta * kl
 
         return elbo_loss * self.train_size
 
