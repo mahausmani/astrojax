@@ -147,7 +147,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Pytorch Bayesian Neural Network")
     parser.add_argument('--data_path', type=str, help='Path to your data folder')
     parser.add_argument('--run_num', type=str, help='Run number to differentiate model runs')
-    parser.add_argument('--train', type=bool, help='Train model or not')
+    parser.add_argument('--train', action='store_true', help='Train model or not')
     parser.add_argument('--saved_model_path', default=None, help='Path to saved model')
     args = parser.parse_args()
 
