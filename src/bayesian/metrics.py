@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
+import math
 import torch.nn.functional as F
 
 
@@ -11,11 +12,11 @@ class ELBO(nn.Module):
 
     def forward(self, input, target, kl, beta):
         # Calculate the log likelihood term for Gaussian likelihood
-        mean = np.mean(input, axis=2)
-        log_likelihood = torch.distributions.Normal(mean, 1).log_prob(target).sum(dim=1)
-        elbo_loss = torch.mean(log_likelihood) - beta * kl
+        log_likelihood = -0.5 * (torch.log(2 * torch.tensor(math.pi)) + torch.pow(target - input, 2))
+        log_likelihood = torch.sum(log_likelihood, dim=1)
+        elbo_loss = torch.mean(log_likelihood) + beta * kl
 
-        return elbo_loss * self.train_size
+        return elbo_loss / self.train_size
 
 def calculate_kl(mu_q, sig_q, mu_p, sig_p):
     kl = 0.5 * (2 * torch.log(sig_p / sig_q) - 1 + (sig_q / sig_p).pow(2) + ((mu_p - mu_q) / sig_p).pow(2)).sum()

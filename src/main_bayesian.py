@@ -19,7 +19,6 @@ def train_model(model, optimizer, criterion, trainloader, num_ens=1, beta_type=0
     accs = []
     kl_list = []
     for i, (x_vals, y_vals) in enumerate(trainloader, 1):
-        print(x_vals.shape, y_vals.shape)
         optimizer.zero_grad()
 
         x_vals, y_vals = x_vals.to(device), y_vals.to(device)
