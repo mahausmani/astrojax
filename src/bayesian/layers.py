@@ -18,7 +18,7 @@ class BayesianLinear(ModuleWrapper):
             priors = {
                 'prior_mu': 0,
                 'prior_sigma': 0.1,
-                'posterior_mu_initial': (0, 0.1),
+                'posterior_mu_initial': (-5, 5),
                 'posterior_rho_initial': (30, 15),
             }
 
