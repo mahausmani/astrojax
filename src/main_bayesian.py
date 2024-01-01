@@ -1,8 +1,10 @@
 import numpy as np
 import torch
 import os
-import dataset
+import data.dataset as dataset
 import utils
+import train as trn
+import val
 import bayesian.metrics as metrics
 import argparse
 
@@ -12,10 +14,9 @@ from tqdm import tqdm
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-def run(config_path, run_num, train, saved_model_path=None):
+def run(config_path):
     config = utils.load_config(config_path)
 
-    # Load configurations from the YAML file
     datapath = config['data_path']
     activation = config['activation']
     train_ens = config['train_ens']
@@ -26,15 +27,19 @@ def run(config_path, run_num, train, saved_model_path=None):
     lr_start = config['lr_start']
     batch_size = config['batch_size']
     hidden_dim = config['hidden_dim']
+    run_name = config['run_name']
+    train = config['train']
+    saved_model_path = config['saved_model_path']
     labels = config['labels']
     priors = config['priors']
 
     dataloader = dataset.Dataset(datapath)
 
-    ckpt_dir = f'checkpoints/bayesian'
-    ckpt_name = f'checkpoints/bayesian/model_{run_num}.pt'
 
-    plots_dir = f'plots/bayesian/{run_num}'
+    ckpt_dir = config.get('ckpt_dir', None)
+    plots_dir = config.get('plots_dir', None).format(run_name=run_name)
+
+    ckpt_name = os.path.join(ckpt_dir, f'{run_name}.pt')
 
     if not os.path.exists(ckpt_dir):
         os.makedirs(ckpt_dir, exist_ok=True)
@@ -45,7 +50,7 @@ def run(config_path, run_num, train, saved_model_path=None):
     trainset, testset = dataloader.get_dataset()
     input_dim, output_dim = dataloader.get_dims()
     train_loader, valid_loader, test_loader = dataset.get_dataloader(trainset, testset, val_size=0.2, batch_size=batch_size)
-    
+
     if train:
         model = BayesianLinearModel(inputs=input_dim, outputs=output_dim, hidden_dim=hidden_dim, priors=None, activation=activation).to(device)
 
@@ -56,8 +61,8 @@ def run(config_path, run_num, train, saved_model_path=None):
 
         for epoch in range(n_epochs):
 
-            train_loss, train_acc, train_kl = utils.train_model(model, optimizer, criterion, train_loader, device, num_ens=train_ens, beta_type=beta_type, epoch=epoch, num_epochs=n_epochs)
-            valid_loss, valid_acc = utils.validate_model(model, criterion, valid_loader, device, num_ens=valid_ens, beta_type=beta_type, epoch=epoch, num_epochs=n_epochs)
+            train_loss, train_acc, train_kl = trn.train_model(model, optimizer, criterion, train_loader, device, num_ens=train_ens, beta_type=beta_type, epoch=epoch, num_epochs=n_epochs)
+            valid_loss, valid_acc = val.validate_model(model, criterion, valid_loader, device, num_ens=valid_ens, beta_type=beta_type, epoch=epoch, num_epochs=n_epochs)
             lr_sched.step(valid_loss)
 
             print('Epoch: {} \tTraining Loss: {:.4f} \tTraining Accuracy: {:.4f} \tValidation Loss: {:.4f} \tValidation Accuracy: {:.4f} \ttrain_kl_div: {:.4f}'.format(
@@ -85,14 +90,11 @@ def run(config_path, run_num, train, saved_model_path=None):
               output, _ = model(x_vals)
               outputs[j, :, :] = output
 
-        utils.plot(outputs, y_vals, labels=labels, filename = f'plots/bayesian/{run_num}/{idx}.png')
+        utils.plot(outputs, y_vals, labels=labels, filename = f'plots/bayesian/{run_name}/{idx}.png')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Pytorch Bayesian Neural Network")
     parser.add_argument('--config_path', type=str, help='Path to your config file')
-    parser.add_argument('--run_num', type=str, help='Run number to differentiate model runs')
-    parser.add_argument('--train', action='store_true', help='Train model or not')
-    parser.add_argument('--saved_model_path', default=None, help='Path to saved model')
     args = parser.parse_args()
 
-    run(args.config_path, args.run_num, args.train, args.saved_model_path)
+    run(args.config_path)

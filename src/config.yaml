@@ -8,9 +8,19 @@ n_epochs: 100
 lr_start: 0.001
 batch_size: 1
 hidden_dim: [1000, 1000, 1000, 1000]
-labels: [r'$\alpha$', r'$m_{min}$', r'$m_{max}$', r'$M_{max}$', r'$\sigma_{ecc}$']
 priors:
   prior_mu: 0
   prior_sigma: 1
   posterior_mu_initial: [0, 1]
   posterior_rho_initial: [0, 10]
+labels:
+  - r'$\alpha$'
+  - r'$m_{min}$'
+  - r'$m_{max}$'
+  - r'$M_{max}$'
+  - r'$\sigma_{ecc}$'
+run_name: "temp"
+ckpt_dir: "checkpoints/bayesian/"
+plots_dir: "plots/bayesian/{run_name}"
+train: True
+saved_model_path: None
