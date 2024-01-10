@@ -7,6 +7,7 @@ def train_model(model, optimizer, criterion, trainloader, device, num_ens=1, bet
     training_loss = 0.0
     accs = []
     kl_list = []
+    coverage_prob = np.array([0, 0, 0])
     for i, (x_vals, y_vals) in enumerate(trainloader, 1):
         optimizer.zero_grad()
 
@@ -23,6 +24,9 @@ def train_model(model, optimizer, criterion, trainloader, device, num_ens=1, bet
         kl = kl / num_ens
         kl_list.append(kl.item())
 
+        cov_prob = metrics.coverage_prob(outputs, targets)
+        coverage_prob = coverage_prob + cov_prob
+
         outputs = outputs.view(outputs.shape[0], -1)
         targets = targets.view(targets.shape[0], -1)
 
@@ -34,4 +38,4 @@ def train_model(model, optimizer, criterion, trainloader, device, num_ens=1, bet
         accs.append(metrics.acc(outputs.data, targets))
         training_loss += loss.cpu().data.numpy()
 
-    return training_loss/len(trainloader), np.mean([acc.detach().cpu().numpy() for acc in accs]), np.mean(kl_list)
+    return training_loss/len(trainloader), np.mean([acc.detach().cpu().numpy() for acc in accs]), np.mean(kl_list), coverage_prob/len(trainloader)

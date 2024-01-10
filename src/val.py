@@ -8,6 +8,7 @@ def validate_model(model, criterion, validloader, device, num_ens=1, beta_type=0
     model.train()
     valid_loss = 0.0
     accs = []
+    coverage_prob = np.array([0, 0, 0])
 
     for i, (x_vals, y_vals) in enumerate(validloader):
 
@@ -20,6 +21,9 @@ def validate_model(model, criterion, validloader, device, num_ens=1, beta_type=0
             kl += _kl
             outputs[:, :, j] = output
             targets[:, :, j] = y_vals
+        
+        cov_prob = metrics.coverage_prob(outputs, targets)
+        coverage_prob = coverage_prob + cov_prob
 
         outputs = outputs.view(outputs.shape[0], -1)
         targets = targets.view(targets.shape[0], -1)
@@ -28,4 +32,4 @@ def validate_model(model, criterion, validloader, device, num_ens=1, beta_type=0
         valid_loss += criterion(outputs, targets, kl, beta).item()
         accs.append(metrics.acc(outputs, targets))
 
-    return valid_loss/len(validloader), np.mean([acc.detach().cpu().numpy() for acc in accs])
+    return valid_loss/len(validloader), np.mean([acc.detach().cpu().numpy() for acc in accs]), coverage_prob/len(validloader)

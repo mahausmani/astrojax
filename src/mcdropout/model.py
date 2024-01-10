@@ -33,4 +33,7 @@ class MCDropoutLinear(nn.Module):
 
         self.layers = nn.Sequential(*layers)
 
+    def forward(self, x):
+        return self.layers(x)
+
     

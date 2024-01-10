@@ -12,9 +12,8 @@ class ELBO(nn.Module):
 
     def forward(self, input, target, kl, beta):
         # Calculate the log likelihood term for Gaussian likelihood
-        log_likelihood = 0.5 * (torch.log(2 * torch.tensor(math.pi)) + torch.pow(target - input, 2))
-        log_likelihood = torch.sum(log_likelihood, dim=1)
-        elbo_loss = torch.mean(log_likelihood) + beta * kl
+        mse_loss = torch.mean(torch.pow(input - target, 2))
+        elbo_loss = mse_loss + beta * kl
 
         return elbo_loss * self.train_size
 
@@ -23,10 +22,27 @@ def calculate_kl(mu_q, sig_q, mu_p, sig_p):
     return kl.mean()
 
 def acc(outputs, targets):
-    """Computes the accuracy for multiple binary predictions"""
-    print('outputs', outputs)
-    print('targets', targets)
     return torch.mean(torch.abs(outputs-targets))
+
+def coverage_prob(inputs, targets):
+    inputs = inputs.cpu().detach().numpy()
+    targets = targets.cpu().detach().numpy()
+    batch_size, params, samples = inputs.shape
+
+    param_coverage_prob = []
+
+    for param in range(params):
+        param_intervals = inputs[:, param, :]
+        param_targets = targets[:, param, :]
+
+        min_values = np.min(param_intervals, axis=1)
+        max_values = np.max(param_intervals, axis=1)
+        true_values = np.mean(param_targets, axis=1)
+
+        coverage = np.sum((true_values > min_values) & (true_values < max_values)) / batch_size
+        param_coverage_prob.append(coverage)
+    
+    return param_coverage_prob
 
 def get_beta(batch_idx, m, beta_type, epoch, num_epochs):
     if type(beta_type) is float:

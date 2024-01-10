@@ -61,12 +61,21 @@ def run(config_path):
 
         for epoch in range(n_epochs):
 
-            train_loss, train_acc, train_kl = trn.train_model(model, optimizer, criterion, train_loader, device, num_ens=train_ens, beta_type=beta_type, epoch=epoch, num_epochs=n_epochs)
-            valid_loss, valid_acc = val.validate_model(model, criterion, valid_loader, device, num_ens=valid_ens, beta_type=beta_type, epoch=epoch, num_epochs=n_epochs)
+            train_loss, train_acc, train_kl, train_coverage = trn.train_model(model, optimizer, criterion, train_loader, device, num_ens=train_ens, beta_type=beta_type, epoch=epoch, num_epochs=n_epochs)
+            valid_loss, valid_acc, val_coverage = val.validate_model(model, criterion, valid_loader, device, num_ens=valid_ens, beta_type=beta_type, epoch=epoch, num_epochs=n_epochs)
             lr_sched.step(valid_loss)
 
-            print('Epoch: {} \tTraining Loss: {:.4f} \tTraining Accuracy: {:.4f} \tValidation Loss: {:.4f} \tValidation Accuracy: {:.4f} \ttrain_kl_div: {:.4f}'.format(
-                epoch, train_loss, train_acc, valid_loss, valid_acc, train_kl))
+            print('Epoch: {} \tTraining Loss: {:.4f} \tTraining Accuracy: {:.4f} \ttrain_kl_div: {:.4f}'.format(
+            epoch, train_loss, train_acc, train_kl), end='')
+
+            for i, coverage_prob in enumerate(train_coverage):
+                print('\tCoverage {}: {:.4f}'.format(i+1, coverage_prob), end='')
+
+            print('\tValidation Loss: {:.4f} \tValidation Accuracy: {:.4f} '.format(valid_loss, valid_acc), end='')
+
+            for i, coverage_prob in enumerate(val_coverage):
+                print('\tCoverage {}: {:.4f}'.format(i+1, coverage_prob), end='')
+
 
             # save model if validation accuracy has increased
             if valid_loss <= valid_loss_max:
