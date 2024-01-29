@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from .misc import ModuleWrapper
 from .metrics import calculate_kl as KL_DIV
 
+
 class BayesianLinear(ModuleWrapper):
     def __init__(self, in_features, out_features, bias=True, priors=None):
         super(BayesianLinear, self).__init__()
@@ -16,25 +17,31 @@ class BayesianLinear(ModuleWrapper):
 
         if priors is None:
             priors = {
-                'prior_mu': 0,
-                'prior_sigma': 0.1,
-                'posterior_mu_initial': (0, 0.1),
-                'posterior_rho_initial': (-3, 0.1),
+                "prior_mu": 0,
+                "prior_sigma": 0.1,
+                "posterior_mu_initial": (0, 0.1),
+                "posterior_rho_initial": (-3, 0.1),
             }
-        self.prior_mu = priors['prior_mu']
-        self.prior_sigma = priors['prior_sigma']
-        self.posterior_mu_initial = priors['posterior_mu_initial']
-        self.posterior_rho_initial = priors['posterior_rho_initial']
+        self.prior_mu = priors["prior_mu"]
+        self.prior_sigma = priors["prior_sigma"]
+        self.posterior_mu_initial = priors["posterior_mu_initial"]
+        self.posterior_rho_initial = priors["posterior_rho_initial"]
 
-        self.W_mu = nn.Parameter(torch.empty((out_features, in_features), device=self.device))
-        self.W_rho = nn.Parameter(torch.empty((out_features, in_features), device=self.device))
+        self.W_mu = nn.Parameter(
+            torch.empty((out_features, in_features), device=self.device)
+        )
+        self.W_rho = nn.Parameter(
+            torch.empty((out_features, in_features), device=self.device)
+        )
 
         if self.use_bias:
             self.bias_mu = nn.Parameter(torch.empty((out_features), device=self.device))
-            self.bias_rho = nn.Parameter(torch.empty((out_features), device=self.device))
+            self.bias_rho = nn.Parameter(
+                torch.empty((out_features), device=self.device)
+            )
         else:
-            self.register_parameter('bias_mu', None)
-            self.register_parameter('bias_rho', None)
+            self.register_parameter("bias_mu", None)
+            self.register_parameter("bias_rho", None)
 
         self.reset_parameters()
 
@@ -53,7 +60,9 @@ class BayesianLinear(ModuleWrapper):
             weight = self.W_mu + W_eps * self.W_sigma
 
             if self.use_bias:
-                bias_eps = torch.empty(self.bias_mu.size()).normal_(0, 1).to(self.device)
+                bias_eps = (
+                    torch.empty(self.bias_mu.size()).normal_(0, 1).to(self.device)
+                )
                 self.bias_sigma = torch.log1p(torch.exp(self.bias_rho))
                 bias = self.bias_mu + bias_eps * self.bias_sigma
             else:

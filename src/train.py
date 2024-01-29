@@ -2,7 +2,19 @@ import torch
 import numpy as np
 import bayesian.metrics as metrics
 
-def train_model(model, optimizer, criterion, trainloader, device, num_ens=1, beta_type=0.1, epoch=None, num_epochs=None, verbose=False):
+
+def train_model(
+    model,
+    optimizer,
+    criterion,
+    trainloader,
+    device,
+    num_ens=1,
+    beta_type=0.1,
+    epoch=None,
+    num_epochs=None,
+    verbose=False,
+):
     model.train()
     training_loss = 0.0
     accs = []
@@ -30,7 +42,7 @@ def train_model(model, optimizer, criterion, trainloader, device, num_ens=1, bet
         outputs = outputs.view(outputs.shape[0], -1)
         targets = targets.view(targets.shape[0], -1)
 
-        beta = metrics.get_beta(i-1, len(trainloader), beta_type, epoch, num_epochs)
+        beta = metrics.get_beta(i - 1, len(trainloader), beta_type, epoch, num_epochs)
         loss = criterion(outputs, targets, kl, beta)
         loss.backward()
         optimizer.step()
@@ -38,4 +50,9 @@ def train_model(model, optimizer, criterion, trainloader, device, num_ens=1, bet
         accs.append(metrics.acc(outputs.data, targets))
         training_loss += loss.cpu().data.numpy()
 
-    return training_loss/len(trainloader), np.mean([acc.detach().cpu().numpy() for acc in accs]), np.mean(kl_list), coverage_prob/len(trainloader)
+    return (
+        training_loss / len(trainloader),
+        np.mean([acc.detach().cpu().numpy() for acc in accs]),
+        np.mean(kl_list),
+        coverage_prob / len(trainloader),
+    )
